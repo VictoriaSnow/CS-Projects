@@ -7,9 +7,12 @@ def deserializeData(value):
 def serializeData(value):
     return ''.join(value)
 
+def gen_bfs_flat_map(l):
+    return lambda value: [value] + [(serializeData(child),l) for child in Sliding.children(WIDTH,HEIGHT,deserializeData(value[0]))] if value[1] == l - 1 else [value]
+
 def bfs_flat_map(value):
     """ YOUR CODE HERE """
-    return [serializeData(child) for child in Sliding.children(WIDTH,HEIGHT,deserializeData(value[0]))]
+    return [''.join(child) for child in Sliding.children(WIDTH,HEIGHT,tuple(value[0]))]
 
 def bfs_map(value):
     return (value, level)
@@ -18,7 +21,6 @@ def gen_bfs_map(lvl):
     return lambda value: (value, lvl)
 
 def bfs_reduce(value1, value2):
-    """ YOUR CODE HERE """
     return min(value1, value2)
 
 def solve_sliding_puzzle(master, output, height, width):
@@ -48,22 +50,21 @@ def solve_sliding_puzzle(master, output, height, width):
     """ YOUR MAP REDUCE PROCESSING CODE HERE """
     data = sc.parallelize([(serializeData(sol), 0)])
     dataList = []
+    dataAggregate = sc.parallelize([]);
     curLen = 1
-    k = 16
+    k = 32
     addFunc = lambda x, y: x + y
-    unpersistFunc = lambda x : x.unpersist()
     maximum = math.factorial(HEIGHT*WIDTH)/2
     while curLen < maximum: # not really just temp value
-        data.cache()
-        dataList.append(data)
+        #data.cache()
+        dataAggregate += data
         data = data.flatMap(bfs_flat_map) \
                    .distinct() \
                    .map(gen_bfs_map(level))
         level += 1
         if(level%k == 0):
-            data = (data + reduce(addFunc, dataList)).repartition(16).reduceByKey(bfs_reduce)
-            map(unpersistFunc, dataList)
-            dataList = []
+            data = (data + dataAggregate).partitionBy(16, lambda x: hash(x[0])).reduceByKey(bfs_reduce)
+            dataAggregate = sc.parallelize([]);
             curLen = data.count()
 
     """ YOUR OUTPUT CODE HERE """
