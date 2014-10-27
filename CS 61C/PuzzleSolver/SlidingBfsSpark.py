@@ -1,27 +1,28 @@
 from pyspark import SparkContext
-import Sliding, argparse, math
+import Sliding, argparse
 
-def deserializeData(value):
-    return tuple(value)
-
-def serializeData(value):
-    return ''.join(value)
-
-def gen_bfs_flat_map(l):
-    return lambda value: [value] + [(serializeData(child),l) for child in Sliding.children(WIDTH,HEIGHT,deserializeData(value[0]))] if value[1] == l - 1 else [value]
 
 def bfs_flat_map(value):
     """ YOUR CODE HERE """
-    return [''.join(child) for child in Sliding.children(WIDTH,HEIGHT,tuple(value[0]))]
-
+    childrenLst=[]    
+    childrenLst.append(value)
+    for child in Sliding.children(WIDTH,HEIGHT,value[0]):
+        pair=[]
+        pair.append(tuple(child))
+        pair.append(level)     
+        childrenLst.append(tuple(pair))
+       
+    return childrenLst
+    
 def bfs_map(value):
-    return (value, level)
+    """ YOUR CODE HERE """
 
-def gen_bfs_map(lvl):
-    return lambda value: (value, lvl)
+    pass
+
 
 def bfs_reduce(value1, value2):
-    return min(value1, value2)
+    """ YOUR CODE HERE """
+    return min(value1,value2)
 
 def solve_sliding_puzzle(master, output, height, width):
     """
@@ -31,7 +32,7 @@ def solve_sliding_puzzle(master, output, height, width):
      height: height of puzzle
      width: width of puzzle
     """
-    # Set up the spark context. Use this to create your RDD
+    # Set up the spark context. Use this to create your data
     sc = SparkContext(master, "python")
 
     # Global constants that will be shared across all map and reduce instances.
@@ -41,36 +42,39 @@ def solve_sliding_puzzle(master, output, height, width):
     # Initialize global constants
     HEIGHT=height
     WIDTH=width
-    level = 1 # this "constant" will change, but it remains constant for every MapReduce job
+    level = 0 # this "constant" will change, but it remains constant for every MapReduce job
 
     # The solution configuration for this sliding puzzle. You will begin exploring the tree from this node
     sol = Sliding.solution(WIDTH, HEIGHT)
 
 
     """ YOUR MAP REDUCE PROCESSING CODE HERE """
-    data = sc.parallelize([(serializeData(sol), 0)])
-    dataList = []
-    dataAggregate = sc.parallelize([]);
-    curLen = 1
-    k = 32
-    addFunc = lambda x, y: x + y
-    maximum = math.factorial(HEIGHT*WIDTH)/2
-    while curLen < maximum: # not really just temp value
-        #data.cache()
-        dataAggregate += data
-        data = data.flatMap(bfs_flat_map) \
-                   .distinct() \
-                   .map(gen_bfs_map(level))
+    parent = [(sol,level),]
+    data = sc.parallelize(parent)
+    counter = 0
+    curLen = 1 
+    while(counter < curLen):
         level += 1
-        if(level%k == 0):
-            data = (data + dataAggregate).partitionBy(16, lambda x: hash(x[0])).reduceByKey(bfs_reduce)
-            dataAggregate = sc.parallelize([]);
+        data = data.flatMap(bfs_flat_map)
+        
+        if (level % 8 ==0):
+            data = data.partitionBy(4).reduceByKey(bfs_reduce)
+
+        if (level% 32 == 0):
+            data = data.partitionBy(16).reduceByKey(bfs_reduce)
+
+        if (level% 4 == 0):
+            counter = curLen
             curLen = data.count()
+        data = data.reduceByKey(bfs_reduce)
+
+    pairs = data.collect()
+    pairs=sorted(pairs, key = lambda value : value[1]) 
 
     """ YOUR OUTPUT CODE HERE """
-    # sort by value
-    output('\n'.join(data.sortByKey(True).map(lambda (x,y): (y,x)).sortByKey(True).map(lambda (x,y): str(x) + " " + str(y)).collect()))
-    output("\n".join([str(level), str(curLen), str(maximum)]))
+    for pair in pairs:
+        string=str(pair[1])+" "+str(pair[0])
+        output(string)
 
     sc.stop()
 
