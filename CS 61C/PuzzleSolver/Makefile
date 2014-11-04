@@ -10,7 +10,7 @@ default: ec2-medium
 
 local-test:
 	rm -rf local-test-puzzle-out
-	PYTHONWARNINGS="ignore" time spark-submit --py-files $(UTIL) $(SOLVER) --master="local[8]" --output="local-test-puzzle-out" --height=2 --width=2 --slaves=6
+	PYTHONWARNINGS="ignore" time spark-submit --py-files $(UTIL) $(SOLVER) --master="local[8]" --output="local-test-puzzle-out" --height=3 --width=3 --slaves=6
 
 ec2-test:
 	rm -rf ec2-test-puzzle-out
