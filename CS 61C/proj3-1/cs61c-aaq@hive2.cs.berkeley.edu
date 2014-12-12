@@ -1,0 +1,185 @@
+// CS 61C Fall 2014 Project 3
+
+// include SSE intrinsics
+#if defined(_MSC_VER)
+#include <intrin.h>
+#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+#include <x86intrin.h>
+#endif
+
+#include "calcDepthOptimized.h"
+#include "calcDepthNaive.h"
+#include <math.h>
+#include <stdbool.h>
+#include "utils.h"
+
+#define ABS(x) (((x) < 0) ? (-(x)) : (x))
+
+// #define MAX(a,b) ((a) > (b) ? a : b)
+#define MIN(a,b) ((a) < (b) ? a : b)
+
+// bool is_out_of_bounds(int x, int y, int width, int height, int image_width, int image_height){
+
+// 	return ((x+width>=image_width)||(x<width)||(y+height>=image_height)||(y<height));
+// }
+void calcDepthOptimized(float *depth, float *left, float *right, int imageWidth, int imageHeight, int featureWidth, int featureHeight, int maximumDisplacement)
+{
+	// for (int y = 0; y < featureHeight; y++){
+	// 	for (int x = 0; x < imageWidth; x++){
+	// 		depth[y * imageWidth + x] = 0;
+	// 	}
+	// }
+
+	// for (int y = imageHeight - featureHeight - 1; y < imageHeight; y++){
+	// 	for (int x = 0; x < imageWidth; x++){
+	// 		depth[y * imageWidth + x] = 0;
+	// 	}
+	// }
+
+	// for (int x = 0; x < featureWidth; x++){
+	// 	for (int y = featureHeight; y < imageHeight; y++){
+	// 		depth[y * imageWidth + x] = 0;
+	// 	}
+	// }
+
+	// for (int x = 0; x < featureWidth; x++){
+	// 	for (int y = featureHeight; y < imageHeight - featureHeight; y++){
+	// 		depth[y * imageWidth + x] = 0;
+	// 	}
+	// }
+
+	// for (int x = imageWidth - featureWidth - 1; x < imageWidth; x++){
+	// 	for (int y = featureHeight; y < imageHeight - featureHeight; y++){
+	// 		depth[y * imageWidth + x] = 0;
+	// 	}
+	// }
+	for(int i = 0; i < imageWidth*imageHeight; i ++) {
+		depth[i] = 0;
+	}
+	int heightDiff=imageHeight-featureHeight;
+	int widthDiff=imageWidth-featureWidth;
+	for (int y = featureHeight; y < heightDiff; y++)
+	{
+		for (int x = featureWidth; x < widthDiff; x++)
+		{
+			int get_index=y * imageWidth + x;
+
+			float minimumSquaredDifference = -1;
+			int minimumDy = 0;
+			int minimumDx = 0;
+
+			int left_dy_bound=-MIN(maximumDisplacement,y-featureHeight);
+			int left_dx_bound=-MIN(maximumDisplacement,x-featureWidth);
+			int right_dy_bound=MIN(maximumDisplacement,heightDiff-y-1);
+			int right_dx_bound=MIN(maximumDisplacement,widthDiff-x-1);
+
+
+
+			for (int dy = left_dy_bound; dy <= right_dy_bound; dy++)
+			{
+				for (int dx = left_dx_bound; dx <= right_dx_bound; dx++)
+				{
+
+					float squaredDifference = 0;
+					__m128 tempSqDiff = _mm_setzero_ps();
+
+					for (int boxY = -featureHeight; boxY <= featureHeight; boxY++)
+					{
+
+						int leftX=0;
+						int leftY=y+boxY;
+						int rightX=0;
+						int rightY=y+dy+boxY;
+
+
+
+						// for(int boxX=-featureWidth;boxX<-featureWidth+(2*featureWidth+1)/8*8;boxX+=8)
+						// {
+						// 	leftX=x+boxX;
+						// 	rightX=x+dx+boxX;
+
+						// 	float* leftIndex=left+leftY*imageWidth+leftX;
+						// 	float* rightIndex=right+rightY*imageWidth+rightX;
+						// 	__m128 leftTemp = _mm_loadu_ps(leftIndex);
+						// 	__m128 rightTemp = _mm_loadu_ps(rightIndex);
+						// 	__m128 difference = _mm_sub_ps(leftTemp, rightTemp);
+						// 	tempSqDiff = _mm_add_ps(_mm_mul_ps(difference, difference), tempSqDiff);
+							
+
+						// 	leftTemp = _mm_loadu_ps(leftIndex+4);
+						// 	rightTemp = _mm_loadu_ps(rightIndex+4);
+						// 	difference = _mm_sub_ps(leftTemp, rightTemp);
+						// 	tempSqDiff = _mm_add_ps(_mm_mul_ps(difference, difference), tempSqDiff);	
+
+						// }
+						// int boxX=featureWidth;					
+						// leftX = x + boxX;
+						// 	//leftY = y + boxY;
+						// rightX = x + dx + boxX;
+						// 	//rightY = y + dy + boxY;
+
+						// float difference = left[leftY * imageWidth + leftX] - right[rightY * imageWidth + rightX];
+						// squaredDifference += difference * difference;
+
+
+
+						for (int boxX=-featureWidth; boxX < -featureWidth+(2*featureWidth+1)/4*4; boxX+=4)
+						{
+
+							leftX = x + boxX;
+							rightX = x + dx + boxX;
+
+							__m128 leftTemp = _mm_loadu_ps(left + leftY*imageWidth + leftX);
+							__m128 rightTemp = _mm_loadu_ps(right + rightY*imageWidth + rightX);
+							__m128 difference = _mm_sub_ps(leftTemp, rightTemp);
+							tempSqDiff = _mm_add_ps(_mm_mul_ps(difference, difference), tempSqDiff);
+
+						}
+
+						for (int boxX = -featureWidth+(2*featureWidth+1)/4*4; boxX <= featureWidth; boxX++)
+						{
+							leftX = x + boxX;
+							leftY = y + boxY;
+							rightX = x + dx + boxX;
+							rightY = y + dy + boxY;
+
+							float difference = left[leftY * imageWidth + leftX] - right[rightY * imageWidth + rightX];
+							squaredDifference += difference * difference;
+
+						}
+
+					}
+
+					float SUM[4] = {0, 0, 0, 0};
+					tempSqDiff = _mm_hadd_ps(tempSqDiff, tempSqDiff);
+					tempSqDiff = _mm_hadd_ps(tempSqDiff, tempSqDiff);
+					_mm_storeu_ps(SUM, tempSqDiff);
+					squaredDifference += SUM[0];
+
+					if ((minimumSquaredDifference == -1) || ((minimumSquaredDifference == squaredDifference) && (displacementNaive(dx, dy) < displacementNaive(minimumDx, minimumDy))) || (minimumSquaredDifference > squaredDifference))
+					{
+						minimumSquaredDifference = squaredDifference;
+						minimumDx = dx;
+						minimumDy = dy;
+					}
+				}
+			}
+
+			if (minimumSquaredDifference != -1)
+			{
+				if (maximumDisplacement == 0)
+				{
+					depth[get_index] = 0;
+				}
+				else
+				{
+					depth[get_index] = displacementNaive(minimumDx, minimumDy);
+				}
+			}
+			else
+			{
+				depth[get_index] = 0;
+			}
+		}
+	}
+}

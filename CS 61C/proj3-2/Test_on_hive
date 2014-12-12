@@ -1,0 +1,29 @@
+(19:51:21 Wed Nov 19 2014 cs61c-aaq@hive13 Linux x86_64)
+~/proj3/part2 $ ./benchmark
+Testing non-odd cases: 
+Testing 250x250 image, feature width 4, feature height 4, maximum diplacement 6... 31.1383 Gflop/s
+Testing 250x250 image, feature width 6, feature height 6, maximum diplacement 6... 24.9689 Gflop/s
+Testing 500x500 image, feature width 4, feature height 4, maximum diplacement 6... 33.6156 Gflop/s
+Testing 500x500 image, feature width 6, feature height 6, maximum diplacement 6... 24.9774 Gflop/s
+Testing 750x750 image, feature width 8, feature height 8, maximum diplacement 6... 36.1682 Gflop/s
+
+Testing odd cases: 
+Testing 400x600 image, feature width 3, feature height 3, maximum diplacement 7... 14.7708 Gflop/s
+Testing 600x400 image, feature width 4, feature height 4, maximum diplacement 7... 34.2090 Gflop/s
+Testing 501x501 image, feature width 4, feature height 4, maximum diplacement 7... 33.8317 Gflop/s
+Testing 751x751 image, feature width 4, feature height 4, maximum diplacement 4... 32.0335 Gflop/s
+
+(20:27:15 Wed Nov 19 2014 cs61c-aaq@hive13 Linux x86_64)
+~/proj3/part2 $ ./benchmark
+Testing non-odd cases: 
+Testing 250x250 image, feature width 4, feature height 4, maximum diplacement 6... 31.4648 Gflop/s
+Testing 250x250 image, feature width 6, feature height 6, maximum diplacement 6... 24.8762 Gflop/s
+Testing 500x500 image, feature width 4, feature height 4, maximum diplacement 6... 33.6246 Gflop/s
+Testing 500x500 image, feature width 6, feature height 6, maximum diplacement 6... 24.9071 Gflop/s
+Testing 750x750 image, feature width 8, feature height 8, maximum diplacement 6... 36.1874 Gflop/s
+
+Testing odd cases: 
+Testing 400x600 image, feature width 3, feature height 3, maximum diplacement 7... 14.8141 Gflop/s
+Testing 600x400 image, feature width 4, feature height 4, maximum diplacement 7... 34.1527 Gflop/s
+Testing 501x501 image, feature width 4, feature height 4, maximum diplacement 7... 33.9260 Gflop/s
+Testing 751x751 image, feature width 4, feature height 4, maximum diplacement 4... 32.0565 Gflop/s
