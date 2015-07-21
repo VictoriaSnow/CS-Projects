@@ -51,7 +51,6 @@ def scheme_read(src):
             return intern(val)
     elif val == "'":
         "*** YOUR CODE HERE ***"
-        return Pair('quote', Pair(scheme_read(src), nil))
     elif val == "(":
         return read_tail(src)
     else:
@@ -86,20 +85,11 @@ def read_tail(src):
             src.pop()
             return nil
         "*** YOUR CODE HERE ***"
-        if src.current() == ".":
-            src.pop()
-            first = scheme_read(src)
-            rest = read_tail(src)
-            if rest == ")" or rest != nil: 
-                raise SyntaxError("Expected one element after .")
-            return first
         first = scheme_read(src)
         rest = read_tail(src)
         return Pair(first, rest)
     except EOFError:
         raise SyntaxError("unexpected end of file")
-
-
 
 # Convenience methods
 
