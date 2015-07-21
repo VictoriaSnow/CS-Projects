@@ -8,6 +8,139 @@
 
 ;;; *** Add more of your own here! ***
 
+(define a (define b 3))
+;expect a
+(define a (define b (define c 1)))
+;expect a
+a
+;expect b
+b
+;expect c
+c
+;expect 1
+(odd? 11)
+;expect #t
+(even? 11)
+;expect #f
+(or (and (and (* 2 3) (+ 1 2)) (or (> 1 2) (= 1 3))) #t)
+;expect #t
+(if (or #t (/ 1 0)) 1 (/ 1 0))
+;expect 1
+(and (* 2 3))
+;expect 6
+(if (/ 1 0) 1
+  (1 (/ 1 0)))
+;expect error
+(define (cubed x) (* x x x))
+(cubed (* 2 2))
+; expect 64
+(define cubed (lambda (x) (* x x x)))
+(cubed(+ 4 (* 2 3)))
+;expect 1000
+(define (squared x) (* x x))
+(squared (+ 3 2))
+;expect 25
+(define (adder x) (+ (cubed x) x))
+(adder (squared 3))
+;expect 738
+'squared
+;expect squared
+(define (factorial x)
+  (if (< x 2)
+    1
+    (* x (factorial (- x 1)))))
+(factorial 4)
+;expect 24
+(factorial (cubed 2))
+;expect 40320
+(factorial (adder 1))
+;expect 1
+(define (fib n)
+  (if (< n 2)
+    1
+    (+ (fib (- n 1)) (fib (- n 2)))))
+(fib 1)
+;expect 1
+(fib 8)
+;expect 34
+(fib (factorial 3))
+;expect 13
+(define (map fn lst)
+  (if (null? lst)
+    '()
+    (cons (fn (car lst)) (map fn (cdr lst)))))
+(map squared (list 10 20))
+;expect (100 400)
+(map factorial (list 3 4))
+;expect (6 24)
+(if (and False (/ 1 0)) (cubed 3)
+  (squared (cubed 3)))
+;expect 729
+(let ((a 1) (b 1))
+  (let ((c (* a b)))
+    c))
+;expect 1
+(and #t #f)
+;expect #f
+(and #t #f (/ 1 0))
+;expect #f
+(or 4 #t (/ 1 0))
+;expect 4
+(define (pow b n)
+  (cond ((= n 0) 1)
+        ((even? n) (squared (pow b (/ n 2))))
+        (else (* b (pow b (- n 1))))))
+(pow 2 3)
+;expect 8
+(pow (+ 2 1) (* 2 3))
+;expect 729
+(pow (squared 2) (or 3 #t))
+;expect 64
+(define x (lambda () 'lambdafunc))
+(x)
+;expect lambdafunc
+(cdr (car '(1 2 3)))
+;expect error
+(car (cdr '(1 2 3)))
+;expect 2
+(car (car (cdr '(1 2 3))))
+;expect error
+(= (cond ((= 4 4) 'here 42)) (cond ((= 4 4) (begin 'here 42))))
+;expect #t
+(cond ((= (+ 2 2) (cubed 2)))
+  ('hi))
+;expect hi
+(let ((x (fib 3))
+  (y (factorial 3)))
+  (list x y))
+;expect (3 6)
+(let ((x (fib 3))) x (fib 4) (fib 5))
+;expect 8
+(cond ((> 3 4) 'no)
+      ((< 4 4))
+      (else 'yes))
+;expect yes
+(cond ((> 3 4) 'no)
+      ((= 4 4) 'us)
+      (else 'yes))
+;expect us
+(car '(1 2 3))
+; expect 1
+(cdr '(529 294 2930))
+; expect (294, 2930)
+(car'(cdr '(3 2 1)))
+; expect 2
+(or 7 #t #t #t)
+;expect 7
+(and #f 5)
+;expect #f
+(define x 10)
+(define y 13)
+(if (= x y) ('hoorah))
+;expect okay
+
+
+
 ;;; These are examples from several sections of "The Structure
 ;;; and Interpretation of Computer Programs" by Abelson and Sussman.
 
@@ -56,7 +189,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Move the following (exit) line to run additional tests. ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(exit)
+
 
 
 ;;; 1.1.2
@@ -578,7 +711,7 @@ one-through-four
 ;;; Extra credit ;;;
 ;;;;;;;;;;;;;;;;;;;;
 
-(exit)
+
 
 ; Tail call optimization test
 (define (sum n total)
